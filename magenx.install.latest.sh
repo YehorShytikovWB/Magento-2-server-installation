@@ -629,7 +629,12 @@ if [ "${mariadb_install}" == "y" ]; then
      echo
      GREENTXT "MariaDB installed  -  OK"
      echo
-     systemctl enable mariadb
+     if [ ENV -ne "DOCKER" ]
+	then
+     		/etc/init.d/mariadb start
+        else
+       		systemctl enable mariadb
+     fi
      echo
      PACKAGES_INSTALLED mariadb*
      echo "127.0.0.1 mariadb" >> /etc/hosts
@@ -682,7 +687,12 @@ if [ "${nginx_install}" == "y" ]; then
      echo
      GREENTXT "Nginx ${NGINX_VERSION} installed  -  OK"
      echo
-     systemctl enable nginx >/dev/null 2>&1
+     if [ENV == "DOCKER"]
+     	than 
+		nginx
+        else
+     		systemctl enable nginx >/dev/null 2>&1	
+     fi
      PACKAGES_INSTALLED nginx*
     else
      echo
@@ -885,6 +895,9 @@ chmod 640 /etc/redis/${SERVICE}-${ENV_SELECTED}.conf
 
 echo "127.0.0.1 ${SERVICE}-${ENV_SELECTED}" >> /etc/hosts
 
+if [ ENV != "DOCKER"]
+    /usr/bin/redis-server  --daemonize yes
+fi
 systemctl daemon-reload
 systemctl enable redis@${SERVICE}-${ENV_SELECTED}
 systemctl restart redis@${SERVICE}-${ENV_SELECTED}
@@ -1109,14 +1122,16 @@ systemctl daemon-reload
 systemctl enable elasticsearch.service
 systemctl restart elasticsearch.service
 
-    if [ "$?" != 0 ]; then
+    if [ "$?" != 0 ] && [ ENV != "DOCKER"]; then
       echo ""
       REDTXT "[!] Elasticsearch startup error"
       REDTXT "[!] Please correct error above and try again"
       echo ""
       exit 1
+    else 
+      /etc/init.d/elasticsearch start -d
     fi
-
+    
 echo ""
 YELLOWTXT "Re-generating random password for elastic user:"
 /usr/share/elasticsearch/bin/elasticsearch-setup-passwords auto -b > /tmp/elasticsearch
